@@ -498,7 +498,7 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const email = document.getElementById('authEmail').value;
             const pass = document.getElementById('authPassword').value;
-
+            
             try {
                 // Try sign in
                 await auth.signInWithEmailAndPassword(email, pass);
@@ -519,6 +519,127 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         });
+    }
+
+    const googleAuthBtn = document.getElementById('googleAuthBtn');
+    if(googleAuthBtn) {
+        googleAuthBtn.addEventListener('click', async () => {
+            if (typeof firebase === 'undefined') return;
+            const provider = new firebase.auth.GoogleAuthProvider();
+            try {
+                await auth.signInWithPopup(provider);
+                hideAuthModal();
+            } catch (error) {
+                authError.textContent = error.message;
+                authError.classList.remove('hidden');
+            }
+        });
+    }
+
+    // Exam Schedule Feature
+    const examScheduleBtn = document.getElementById('examScheduleBtn');
+    const examModal = document.getElementById('examModal');
+    const closeExamModalBtn = document.getElementById('closeExamModalBtn');
+    const examTimelineContainer = document.getElementById('examTimelineContainer');
+
+    if(examScheduleBtn) {
+        examScheduleBtn.addEventListener('click', renderExamTimeline);
+    }
+    if(closeExamModalBtn) {
+        closeExamModalBtn.addEventListener('click', () => {
+            examModal.classList.add('opacity-0');
+            examModal.querySelector('.modal-content').classList.add('scale-95');
+            setTimeout(() => examModal.classList.add('hidden'), 300);
+        });
+    }
+
+    function renderExamTimeline() {
+        if(!examTimelineContainer) return;
+        examTimelineContainer.innerHTML = '';
+        
+        let allExams = [];
+        for (let s = 1; s <= 4; s++) {
+            boardState.semesters[s].forEach(id => {
+                const c = courseMap[id];
+                if(c && c.examDate) {
+                    allExams.push({
+                        ...c,
+                        semester: s,
+                        dateObj: new Date(c.examDate)
+                    });
+                }
+            });
+        }
+        
+        if(allExams.length === 0) {
+            examTimelineContainer.innerHTML = '<p class="text-gray-400 text-center mt-10">No exams scheduled in your current plan.</p>';
+            showExamModal();
+            return;
+        }
+
+        allExams.sort((a,b) => a.dateObj - b.dateObj);
+        
+        const timelineWrapper = document.createElement('div');
+        timelineWrapper.className = 'flex flex-col gap-4 relative py-4';
+        
+        // vertical line
+        const vLine = document.createElement('div');
+        vLine.className = 'absolute left-8 top-4 bottom-4 w-0.5 bg-gray-600 z-0';
+        timelineWrapper.appendChild(vLine);
+
+        for(let i=0; i<allExams.length; i++) {
+            const ex = allExams[i];
+            
+            let collision = false;
+            // Check previous
+            if(i > 0) {
+                const diffDays = Math.ceil(Math.abs(ex.dateObj - allExams[i-1].dateObj) / (1000*60*60*24));
+                if(diffDays < 4) collision = true;
+            }
+            // Check next
+            if(i < allExams.length - 1) {
+                const diffDays = Math.ceil(Math.abs(ex.dateObj - allExams[i+1].dateObj) / (1000*60*60*24));
+                if(diffDays < 4) collision = true;
+            }
+
+            const item = document.createElement('div');
+            item.className = 'relative z-10 flex items-center gap-6 ml-6';
+            
+            // dot
+            const dot = document.createElement('div');
+            dot.className = `w-4 h-4 rounded-full shrink-0 shadow-[0_0_10px_currentColor] ${collision ? 'bg-red-500 text-red-500' : 'bg-brand-500 text-brand-500'} ring-4 ring-dark-bg`;
+            
+            // content
+            const content = document.createElement('div');
+            content.className = `flex-1 p-4 rounded-lg border bg-dark-card ${collision ? 'border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.15)]' : 'border-gray-700'}`;
+            
+            content.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <div>
+                        <div class="text-xs ${collision ? 'text-red-400 font-bold' : 'text-brand-400'} mb-1">${ex.examDate} ${collision ? '⚠️ Collision' : ''}</div>
+                        <div class="font-bold text-white">${ex.name}</div>
+                        <div class="text-xs text-gray-400 mt-1">${ex.id} • ${ex.professor}</div>
+                    </div>
+                    <span class="px-2 py-1 bg-dark-panel rounded text-xs font-semibold text-gray-300 border border-gray-600">Sem ${ex.semester}</span>
+                </div>
+            `;
+            
+            item.appendChild(dot);
+            item.appendChild(content);
+            timelineWrapper.appendChild(item);
+        }
+        
+        examTimelineContainer.appendChild(timelineWrapper);
+        showExamModal();
+    }
+
+    function showExamModal() {
+        if(!examModal) return;
+        examModal.classList.remove('hidden');
+        setTimeout(() => {
+            examModal.classList.remove('opacity-0');
+            examModal.querySelector('.modal-content').classList.remove('scale-95');
+        }, 10);
     }
 
     // 7. Initial Render
