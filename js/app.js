@@ -230,7 +230,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const ids = boardState.semesters[s];
             const exams = [];
             ids.forEach(id => {
-                const c = courseMap[id];
+                const c = getCourseData(id);
                 if (c && c.examDate) {
                     exams.push({ id, date: new Date(c.examDate) });
                 }
@@ -577,7 +577,41 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const doc = await db.collection('users').doc(currentUser.uid).get();
             if (doc.exists && doc.data().plan) {
-                boardState = doc.data().plan;
+                const fetched = doc.data().plan;
+                
+                // Sanitize old states
+                if(!fetched.customEdits) fetched.customEdits = {};
+                if(!fetched.customModules) fetched.customModules = [];
+                if(!fetched.difficulties) fetched.difficulties = {};
+                if(!fetched.pool) fetched.pool = [];
+                if(!fetched.semesters) fetched.semesters = {"1":[], "2":[], "3":[], "4":[]};
+                
+                boardState = fetched;
+
+                // Sync custom modules into courseMap
+                boardState.customModules.forEach(c => { courseMap[c.id] = c; });
+
+                // Identify missing IDs in pool
+                const validIds = new Set(Object.keys(courseMap));
+                boardState.pool = boardState.pool.filter(id => validIds.has(id));
+                for (let s in boardState.semesters) {
+                    boardState.semesters[s] = boardState.semesters[s].filter(id => validIds.has(id));
+                }
+
+                const storedIds = new Set([
+                    ...boardState.pool,
+                    ...boardState.semesters["1"],
+                    ...boardState.semesters["2"],
+                    ...boardState.semesters["3"],
+                    ...boardState.semesters["4"]
+                ]);
+
+                Object.keys(courseMap).forEach(id => {
+                    if (!storedIds.has(id)) {
+                        boardState.pool.push(id);
+                    }
+                });
+
                 renderSemesters();
                 renderPool();
                 updateCalculations();
