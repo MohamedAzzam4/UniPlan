@@ -30,15 +30,28 @@
     </script>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+
     <!-- Custom CSS -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="bg-dark-bg text-gray-100 font-sans h-screen flex overflow-hidden">
     <!-- Sidebar: Course Pool -->
-    <aside class="w-[350px] shrink-0 h-full bg-dark-panel flex flex-col border-r border-gray-700 glass-panel z-10 relative shadow-2xl">
-        <div class="p-6 pb-4 border-b border-gray-700">
-            <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-brand-500 to-blue-400">FAU UniPlan</h1>
-            <p class="text-sm text-gray-400 mt-1">M.Sc. Autonomy Technologies</p>
+    <aside id="sidebar" class="w-[350px] shrink-0 h-full bg-dark-panel flex flex-col border-r border-gray-700 glass-panel z-10 relative shadow-2xl transition-width duration-300" style="resize: horizontal; overflow: hidden; min-width: 320px; max-width: 800px;">
+        <div class="p-6 pb-4 border-b border-gray-700 shrink-0">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-brand-500 to-blue-400">FAU UniPlan</h1>
+                    <p class="text-sm text-gray-400 mt-1">M.Sc. Autonomy Technologies</p>
+                </div>
+                <button id="expandBtn" class="text-gray-400 hover:text-white transition-colors" title="Expand/Collapse Sidebar">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+                </button>
+            </div>
             
             <div class="mt-4 relative">
                 <input type="text" id="searchInput" placeholder="Search modules..." class="w-full bg-dark-card border border-gray-600 rounded-lg py-2 px-4 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-shadow duration-300">
@@ -53,9 +66,14 @@
             <!-- Courses will be injected here -->
         </div>
         
-        <div class="p-4 border-t border-gray-700 text-xs text-gray-500 flex justify-between items-center">
-            <span>Drag items to semesters</span>
-            <button id="resetBtn" class="hover:text-red-400 transition-colors">Reset Board</button>
+        <div class="p-4 border-t border-gray-700 text-xs text-gray-500 flex justify-between items-center bg-dark-panel shrink-0">
+            <div id="authContainer">
+                <button id="openLoginBtn" class="text-brand-500 hover:text-brand-400 font-semibold transition-colors flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
+                    Login to Sync
+                </button>
+            </div>
+            <button id="resetBtn" class="hover:text-red-400 transition-colors" title="Reset Board">Reset</button>
         </div>
     </aside>
 
@@ -105,6 +123,25 @@
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <!-- Login Modal -->
+    <div id="authModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center opacity-0 transition-opacity duration-300">
+        <div class="bg-dark-panel border border-gray-700/50 rounded-xl shadow-2xl p-6 w-full max-w-sm transform scale-95 transition-transform duration-300 relative modal-content">
+            <button id="closeAuthModalBtn" class="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <h2 class="text-xl font-bold text-white mb-4 text-center">Firebase Sync</h2>
+            <div id="authError" class="hidden bg-red-500/20 text-red-400 text-xs p-2 rounded mb-3 text-center border border-red-500/50"></div>
+            <form id="authForm" class="flex flex-col gap-3">
+                <input type="email" id="authEmail" placeholder="Email" required class="w-full bg-dark-card border border-gray-600 rounded-lg py-2 px-3 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                <input type="password" id="authPassword" placeholder="Password" required class="w-full bg-dark-card border border-gray-600 rounded-lg py-2 px-3 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                <button type="submit" class="mt-2 w-full bg-brand-600 hover:bg-brand-500 text-white font-semibold py-2 px-4 rounded-lg transition-colors" id="authSubmitBtn">Login / Register</button>
+            </form>
+            <p class="text-[10px] text-gray-500 text-center mt-4">
+                If the account doesn't exist, it will be created automatically. You must configure your Firebase details in app.js!
+            </p>
+        </div>
+    </div>
+
     <script src="js/courses.js"></script>
     <script src="js/app.js"></script>
 </body>

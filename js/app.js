@@ -25,15 +25,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Identify courses missing from boardState (new courses)
     const storedIds = new Set([
-        ...boardState.pool, 
-        ...boardState.semesters["1"], 
-        ...boardState.semesters["2"], 
-        ...boardState.semesters["3"], 
+        ...boardState.pool,
+        ...boardState.semesters["1"],
+        ...boardState.semesters["2"],
+        ...boardState.semesters["3"],
         ...boardState.semesters["4"]
     ]);
-    
+
     COURSE_DATA.forEach(c => {
-        if(!storedIds.has(c.id)) {
+        if (!storedIds.has(c.id)) {
             boardState.pool.push(c.id);
         }
     });
@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Details Button (Double click on card also works)
         card.addEventListener('dblclick', () => showModal(id));
-        
+
         // Difficulty Toggle
         const diffBtn = card.querySelector('.diff-toggle');
         diffBtn.addEventListener('click', (e) => {
@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const levels = ['Low', 'Medium', 'High'];
         let current = boardState.difficulties[id] || courseMap[id].defaultDifficulty || 'Medium';
         let next = levels[(levels.indexOf(current) + 1) % levels.length];
-        
+
         boardState.difficulties[id] = next;
         saveState();
 
@@ -149,6 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
         pillar: new Set(),
         term: new Set(),
         status: new Set(),
+        type: new Set(),
         ects: new Set(),
         difficulty: new Set()
     };
@@ -156,7 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderPool() {
         poolContainer.innerHTML = '';
         const termQ = searchInput.value.toLowerCase();
-        
+
         boardState.pool.forEach(id => {
             const c = courseMap[id];
             if (!c) return;
@@ -166,18 +167,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Pillar
             if (activeFilters.pillar.size > 0 && !activeFilters.pillar.has(c.pillar)) return;
-            
+
             // Term (All current data is Summer 2026 based on FPO)
-            const cTerm = "Summer"; 
+            const cTerm = "Summer";
             if (activeFilters.term.size > 0 && !activeFilters.term.has(cTerm)) return;
-            
+
             // Status
             const cStatus = (c.examDate && c.professor !== 'N/A') ? "Presented" : "Not Presented";
             if (activeFilters.status.size > 0 && !activeFilters.status.has(cStatus)) return;
-            
+
+            // Type
+            if (activeFilters.type.size > 0 && !activeFilters.type.has(c.type)) return;
+
             // ECTS
             if (activeFilters.ects.size > 0 && !activeFilters.ects.has(String(c.ects))) return;
-            
+
             // Difficulty
             const cDiff = boardState.difficulties[id] || c.defaultDifficulty || 'Medium';
             if (activeFilters.difficulty.size > 0 && !activeFilters.difficulty.has(cDiff)) return;
@@ -192,10 +196,10 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let s = 1; s <= 4; s++) {
             const ids = boardState.semesters[s];
             const totalEcts = ids.reduce((sum, id) => sum + (courseMap[id]?.ects || 0), 0);
-            
+
             const badge = document.getElementById(`ects-sem-${s}`);
             badge.textContent = `${totalEcts} / 30 ECTS`;
-            
+
             badge.className = 'ects-badge';
             if (totalEcts >= 30) badge.classList.add('ects-success');
             else badge.classList.add('ects-normal');
@@ -219,16 +223,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
             for (let i = 0; i < exams.length - 1; i++) {
                 const d1 = exams[i].date;
-                const d2 = exams[i+1].date;
+                const d2 = exams[i + 1].date;
                 const diffTime = Math.abs(d2 - d1);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-                
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
                 if (diffDays < 4) {
                     // Collision
                     const card1 = document.querySelector(`.course-card[data-id="${exams[i].id}"]`);
-                    const card2 = document.querySelector(`.course-card[data-id="${exams[i+1].id}"]`);
-                    if(card1) card1.classList.add('exam-collision');
-                    if(card2) card2.classList.add('exam-collision');
+                    const card2 = document.querySelector(`.course-card[data-id="${exams[i + 1].id}"]`);
+                    if (card1) card1.classList.add('exam-collision');
+                    if (card2) card2.classList.add('exam-collision');
                 }
             }
         }
@@ -237,6 +241,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function saveState() {
         localStorage.setItem('uniplan_state', JSON.stringify(boardState));
         updateCalculations();
+        if (typeof currentUser !== 'undefined' && currentUser) {
+            syncToFirestore();
+        }
     }
 
     // 4. Initialize SortableJS
@@ -284,7 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 5. Modal Logic
     function showModal(id) {
         const c = courseMap[id];
-        if(!c) return;
+        if (!c) return;
 
         modalId.textContent = c.id;
         modalTitle.textContent = c.name;
@@ -317,26 +324,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 6. Events
     searchInput.addEventListener('input', renderPool);
-    
+
     // Dynamic Filter generation
     function createFilterGroup(title, key, options) {
         const group = document.createElement('div');
         group.className = 'filter-group flex flex-col gap-1';
-        
+
         const header = document.createElement('div');
         header.className = 'text-[10px] font-bold text-gray-400 uppercase tracking-wider pl-1';
         header.textContent = title;
         group.appendChild(header);
-        
+
         const pills = document.createElement('div');
         pills.className = 'flex flex-wrap gap-1.5';
-        
+
         options.forEach(opt => {
             const btn = document.createElement('button');
             btn.className = 'filter-btn';
             btn.textContent = opt;
             btn.addEventListener('click', () => {
-                if(activeFilters[key].has(opt)) {
+                if (activeFilters[key].has(opt)) {
                     activeFilters[key].delete(opt);
                     btn.classList.remove('active');
                 } else {
@@ -347,34 +354,172 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             pills.appendChild(btn);
         });
-        
+
         group.appendChild(pills);
         filtersContainer.appendChild(group);
     }
-    
+
     const pillars = new Set();
     const ectsVals = new Set();
     COURSE_DATA.forEach(c => {
-        if(c.pillar && c.pillar !== "General") pillars.add(c.pillar);
-        if(c.ects) ectsVals.add(String(c.ects));
+        if (c.pillar && c.pillar !== "General") pillars.add(c.pillar);
+        if (c.ects) ectsVals.add(String(c.ects));
     });
-    
+
     // We add "General" manually at the start
     const pillarArray = Array.from(pillars).sort();
     pillarArray.unshift("General");
 
     createFilterGroup('Pillar', 'pillar', pillarArray);
+    createFilterGroup('Type', 'type', ['Core', 'Elective', 'Seminar']);
     createFilterGroup('Term', 'term', ['Summer', 'Winter']);
     createFilterGroup('Status', 'status', ['Presented', 'Not Presented']);
-    createFilterGroup('ECTS', 'ects', Array.from(ectsVals).sort((a,b) => Number(a) - Number(b)));
+    createFilterGroup('ECTS', 'ects', Array.from(ectsVals).sort((a, b) => Number(a) - Number(b)));
     createFilterGroup('Difficulty', 'difficulty', ['Low', 'Medium', 'High']);
 
     resetBtn.addEventListener('click', () => {
-        if(confirm("Are you sure you want to reset your entire plan?")) {
+        if (confirm("Are you sure you want to reset your entire plan?")) {
             localStorage.removeItem('uniplan_state');
             location.reload();
         }
     });
+
+    // Sidebar Expand Logic
+    const expandBtn = document.getElementById('expandBtn');
+    const sidebar = document.getElementById('sidebar');
+    let isSidebarExpanded = false;
+    expandBtn.addEventListener('click', () => {
+        isSidebarExpanded = !isSidebarExpanded;
+        if (isSidebarExpanded) {
+            sidebar.style.width = '600px';
+        } else {
+            sidebar.style.width = '350px';
+        }
+    });
+
+    // --- FIREBASE CONFIGURATION (Update this with your own config) ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyArvqHa0QsxFsL5al_p5ejxTrTWi1yvHXU",
+        authDomain: "uniplan-d1c49.firebaseapp.com",
+        projectId: "uniplan-d1c49",
+        storageBucket: "uniplan-d1c49.firebasestorage.app",
+        messagingSenderId: "148809029657",
+        appId: "1:148809029657:web:44ecb73d415507737eb288",
+        measurementId: "G-S5P6JX5QL7"
+    };
+
+    let app, auth, db;
+    let currentUser = null;
+
+    // Initialize Firebase only if the user replaces the dummy key
+    if (firebaseConfig.apiKey !== "YOUR_API_KEY" && typeof firebase !== 'undefined') {
+        app = firebase.initializeApp(firebaseConfig);
+        auth = firebase.auth();
+        db = firebase.firestore();
+
+        auth.onAuthStateChanged(user => {
+            currentUser = user;
+            const openLoginBtn = document.getElementById('openLoginBtn');
+            if (user) {
+                openLoginBtn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg> Logout (${user.email})`;
+                openLoginBtn.classList.replace('text-brand-500', 'text-red-400');
+                openLoginBtn.classList.replace('hover:text-brand-400', 'hover:text-red-300');
+                fetchFromFirestore();
+            } else {
+                openLoginBtn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg> Login to Sync`;
+                openLoginBtn.classList.replace('text-red-400', 'text-brand-500');
+                openLoginBtn.classList.replace('hover:text-red-300', 'hover:text-brand-400');
+            }
+        });
+    }
+
+    async function syncToFirestore() {
+        if (!currentUser || !db) return;
+        try {
+            await db.collection('users').doc(currentUser.uid).set({ plan: boardState });
+        } catch (e) {
+            console.error("Error syncing to Firestore:", e);
+        }
+    }
+
+    async function fetchFromFirestore() {
+        if (!currentUser || !db) return;
+        try {
+            const doc = await db.collection('users').doc(currentUser.uid).get();
+            if (doc.exists && doc.data().plan) {
+                boardState = doc.data().plan;
+                renderSemesters();
+                renderPool();
+                updateCalculations();
+            }
+        } catch (e) {
+            console.error("Error fetching from Firestore:", e);
+        }
+    }
+
+    // Modal & Auth Logic
+    const authModal = document.getElementById('authModal');
+    const openLoginBtn = document.getElementById('openLoginBtn');
+    const closeAuthModalBtn = document.getElementById('closeAuthModalBtn');
+    const authForm = document.getElementById('authForm');
+    const authError = document.getElementById('authError');
+
+    if (openLoginBtn) {
+        openLoginBtn.addEventListener('click', () => {
+            if (currentUser) {
+                auth.signOut();
+            } else {
+                if (firebaseConfig.apiKey === "YOUR_API_KEY") {
+                    alert("Please configure Firebase in app.js first!");
+                    return;
+                }
+                authError.classList.add('hidden');
+                authModal.classList.remove('hidden');
+                setTimeout(() => {
+                    authModal.classList.remove('opacity-0');
+                    authModal.querySelector('.modal-content').classList.remove('scale-95');
+                }, 10);
+            }
+        });
+    }
+
+    if (closeAuthModalBtn) {
+        closeAuthModalBtn.addEventListener('click', hideAuthModal);
+    }
+
+    function hideAuthModal() {
+        authModal.classList.add('opacity-0');
+        authModal.querySelector('.modal-content').classList.add('scale-95');
+        setTimeout(() => authModal.classList.add('hidden'), 300);
+    }
+
+    if (authForm) {
+        authForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('authEmail').value;
+            const pass = document.getElementById('authPassword').value;
+
+            try {
+                // Try sign in
+                await auth.signInWithEmailAndPassword(email, pass);
+                hideAuthModal();
+            } catch (error) {
+                if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+                    try {
+                        // Auto-register if not found
+                        await auth.createUserWithEmailAndPassword(email, pass);
+                        hideAuthModal();
+                    } catch (regError) {
+                        authError.textContent = regError.message;
+                        authError.classList.remove('hidden');
+                    }
+                } else {
+                    authError.textContent = error.message;
+                    authError.classList.remove('hidden');
+                }
+            }
+        });
+    }
 
     // 7. Initial Render
     renderSemesters();
