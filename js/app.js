@@ -2,22 +2,29 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. Initial State
     let boardState = JSON.parse(localStorage.getItem('uniplan_state')) || {
         pool: COURSE_DATA.map(c => c.id),
-        semesters: {
-            "1": [],
-            "2": [],
-            "3": [],
-            "4": []
-        },
-        difficulties: {} // id -> "Low" | "Medium" | "High"
+        semesters: { "1": [], "2": [], "3": [], "4": [] },
+        difficulties: {},
+        customEdits: {},
+        customModules: []
     };
 
-    const courseMap = {};
-    COURSE_DATA.forEach(c => {
-        courseMap[c.id] = c;
-    });
+    if(!boardState.customEdits) boardState.customEdits = {};
+    if(!boardState.customModules) boardState.customModules = [];
 
-    // Clean up boardState (in case COURSE_DATA changed)
-    const validIds = new Set(COURSE_DATA.map(c => c.id));
+    const courseMap = {};
+    COURSE_DATA.forEach(c => { courseMap[c.id] = c; });
+    boardState.customModules.forEach(c => { courseMap[c.id] = c; });
+
+    function getCourseData(id) {
+        const baseData = courseMap[id];
+        if(!baseData) return null;
+        const phase = baseData.examPhase || "Phase 1";
+        const edits = boardState.customEdits[id] || {};
+        return { ...baseData, examPhase: phase, ...edits };
+    }
+
+    // Clean up boardState
+    const validIds = new Set(Object.keys(courseMap));
     boardState.pool = boardState.pool.filter(id => validIds.has(id));
     for (let s in boardState.semesters) {
         boardState.semesters[s] = boardState.semesters[s].filter(id => validIds.has(id));
@@ -32,9 +39,9 @@ document.addEventListener('DOMContentLoaded', () => {
         ...boardState.semesters["4"]
     ]);
 
-    COURSE_DATA.forEach(c => {
-        if (!storedIds.has(c.id)) {
-            boardState.pool.push(c.id);
+    Object.keys(courseMap).forEach(id => {
+        if (!storedIds.has(id)) {
+            boardState.pool.push(id);
         }
     });
 
@@ -55,6 +62,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalProf = document.getElementById('modalProf');
     const modalPillar = document.getElementById('modalPillar');
     const modalDesc = document.getElementById('modalDesc');
+    const modalPhaseBadge = document.getElementById('modalPhaseBadge');
+    
+    const modalViewMode = document.getElementById('modalViewMode');
+    const modalEditMode = document.getElementById('modalEditMode');
+    const editModuleBtn = document.getElementById('editModuleBtn');
+    const cancelEditBtn = document.getElementById('cancelEditBtn');
+    const addModuleBtn = document.getElementById('addModuleBtn');
+    const filtersContainer = document.getElementById('filtersContainer');
+    
+    let currentEditingId = null;
+    let isCreateMode = false;
     const closeModalBtn = document.getElementById('closeModalBtn');
 
     let currentFilter = 'all';
@@ -104,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function toggleDifficulty(id, card, btn) {
         const levels = ['Low', 'Medium', 'High'];
-        let current = boardState.difficulties[id] || courseMap[id].defaultDifficulty || 'Medium';
+        let current = boardState.difficulties[id] || getCourseData(id)?.defaultDifficulty || 'Medium';
         let next = levels[(levels.indexOf(current) + 1) % levels.length];
 
         boardState.difficulties[id] = next;
@@ -143,7 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    const filtersContainer = document.getElementById('filtersContainer');
+    // filtersContainer already declared above
 
     const activeFilters = {
         pillar: new Set(),
@@ -159,7 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const termQ = searchInput.value.toLowerCase();
 
         boardState.pool.forEach(id => {
-            const c = courseMap[id];
+            const c = getCourseData(id);
             if (!c) return;
 
             // Search text
@@ -195,7 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update ECTS
         for (let s = 1; s <= 4; s++) {
             const ids = boardState.semesters[s];
-            const totalEcts = ids.reduce((sum, id) => sum + (courseMap[id]?.ects || 0), 0);
+            const totalEcts = ids.reduce((sum, id) => sum + Number(getCourseData(id)?.ects || 0), 0);
 
             const badge = document.getElementById(`ects-sem-${s}`);
             badge.textContent = `${totalEcts} / 30 ECTS`;
@@ -288,25 +306,137 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // 5. Modal Logic
+    // 5. Modal & Edit Logic
     function showModal(id) {
-        const c = courseMap[id];
+        const c = getCourseData(id);
         if (!c) return;
+
+        currentEditingId = id;
+        isCreateMode = false;
 
         modalId.textContent = c.id;
         modalTitle.textContent = c.name;
         modalEcts.textContent = c.ects;
         modalDate.textContent = c.examDate || 'TBA';
         modalProf.textContent = c.professor || 'N/A';
-        modalPillar.textContent = `${c.pillar !== 'General' ? c.pillar : 'General Module'} • ${c.type}`;
+        modalPillar.textContent = `${c.pillar !== 'General' ? c.pillar : 'General Module'} • ${c.type || 'Core'}`;
         modalDesc.textContent = c.description || 'No description available.';
+        if(modalPhaseBadge) modalPhaseBadge.textContent = c.examPhase || 'Phase 1';
+
+        if(modalViewMode) modalViewMode.classList.remove('hidden');
+        if(modalEditMode) modalEditMode.classList.add('hidden');
+        if(editModuleBtn) editModuleBtn.classList.remove('hidden');
 
         modal.classList.remove('hidden');
-        // small delay to allow display block to apply before animating opacity
         setTimeout(() => {
             modal.classList.remove('opacity-0');
             modal.querySelector('.modal-content').classList.remove('scale-95');
         }, 10);
+    }
+
+    if(editModuleBtn) {
+        editModuleBtn.addEventListener('click', () => {
+            const c = getCourseData(currentEditingId);
+            if(!c) return;
+            
+            document.getElementById('editId').value = c.id;
+            document.getElementById('editId').disabled = true;
+            document.getElementById('editName').value = c.name || '';
+            document.getElementById('editEcts').value = c.ects || 0;
+            document.getElementById('editDate').value = c.examDate || '';
+            document.getElementById('editProf').value = c.professor || '';
+            document.getElementById('editPhase').value = c.examPhase || 'Phase 1';
+            document.getElementById('editPillar').value = c.pillar || 'General';
+            document.getElementById('editType').value = c.type || 'Core';
+            document.getElementById('editDesc').value = c.description || '';
+
+            modalViewMode.classList.add('hidden');
+            editModuleBtn.classList.add('hidden');
+            modalEditMode.classList.remove('hidden');
+        });
+    }
+
+    if(addModuleBtn) {
+        addModuleBtn.addEventListener('click', () => {
+            isCreateMode = true;
+            currentEditingId = null;
+
+            modalId.textContent = "NEW";
+            modalTitle.textContent = "Create Module";
+            if(modalPhaseBadge) modalPhaseBadge.textContent = "Custom";
+
+            document.getElementById('editId').value = '';
+            document.getElementById('editId').disabled = false;
+            document.getElementById('editName').value = '';
+            document.getElementById('editEcts').value = 5;
+            document.getElementById('editDate').value = '';
+            document.getElementById('editProf').value = '';
+            document.getElementById('editPhase').value = 'Phase 1';
+            document.getElementById('editPillar').value = 'General';
+            document.getElementById('editType').value = 'Core';
+            document.getElementById('editDesc').value = '';
+
+            modalViewMode.classList.add('hidden');
+            editModuleBtn.classList.add('hidden');
+            modalEditMode.classList.remove('hidden');
+
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('.modal-content').classList.remove('scale-95');
+            }, 10);
+        });
+    }
+
+    if(cancelEditBtn) {
+        cancelEditBtn.addEventListener('click', () => {
+            if(isCreateMode) {
+                hideModal();
+            } else {
+                modalEditMode.classList.add('hidden');
+                modalViewMode.classList.remove('hidden');
+                editModuleBtn.classList.remove('hidden');
+            }
+        });
+    }
+
+    if(modalEditMode) {
+        modalEditMode.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const id = document.getElementById('editId').value.trim();
+            const payload = {
+                id: id,
+                name: document.getElementById('editName').value.trim(),
+                ects: parseFloat(document.getElementById('editEcts').value) || 0,
+                examDate: document.getElementById('editDate').value,
+                professor: document.getElementById('editProf').value.trim(),
+                examPhase: document.getElementById('editPhase').value,
+                pillar: document.getElementById('editPillar').value,
+                type: document.getElementById('editType').value,
+                description: document.getElementById('editDesc').value.trim()
+            };
+
+            if(isCreateMode) {
+                if(courseMap[id]) {
+                    alert("A module with this ID already exists!");
+                    return;
+                }
+                payload.defaultDifficulty = "Medium";
+                courseMap[id] = payload;
+                boardState.customModules.push(payload);
+                boardState.pool.unshift(id);
+            } else {
+                boardState.customEdits[id] = {
+                    ...boardState.customEdits[id],
+                    ...payload
+                };
+            }
+
+            saveState();
+            renderPool();
+            renderSemesters();
+            showModal(id);
+        });
     }
 
     function hideModal() {
@@ -560,7 +690,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let allExams = [];
         for (let s = 1; s <= 4; s++) {
             boardState.semesters[s].forEach(id => {
-                const c = courseMap[id];
+                const c = getCourseData(id);
                 if(c && c.examDate) {
                     allExams.push({
                         ...c,
