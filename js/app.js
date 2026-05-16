@@ -140,20 +140,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderSemesters() {
-        boardContainer.innerHTML = '';
-        for (let s = 1; s <= 4; s++) {
-            const col = document.createElement('div');
-            col.className = 'semester-col';
-            col.innerHTML = `
-                <div class="semester-header flex justify-between items-center">
-                    <h3 class="text-lg font-bold text-white">Semester ${s}</h3>
-                    <div class="ects-badge ects-normal" id="ects-sem-${s}">0 / 30 ECTS</div>
-                </div>
-                <div class="semester-body custom-scrollbar" id="sem-${s}" data-sem="${s}"></div>
-            `;
-            boardContainer.appendChild(col);
+        if (boardContainer.children.length === 0) {
+            for (let s = 1; s <= 4; s++) {
+                const col = document.createElement('div');
+                col.className = 'semester-col';
+                col.innerHTML = `
+                    <div class="semester-header flex justify-between items-center">
+                        <h3 class="text-lg font-bold text-white">Semester ${s}</h3>
+                        <div class="ects-badge ects-normal" id="ects-sem-${s}">0 / 30 ECTS</div>
+                    </div>
+                    <div class="semester-body custom-scrollbar" id="sem-${s}" data-sem="${s}"></div>
+                `;
+                boardContainer.appendChild(col);
+            }
+        }
 
-            const body = col.querySelector(`#sem-${s}`);
+        for (let s = 1; s <= 4; s++) {
+            const body = document.getElementById(`sem-${s}`);
+            body.innerHTML = '';
             boardState.semesters[s].forEach(id => {
                 const card = createCard(id);
                 if (card) body.appendChild(card);
