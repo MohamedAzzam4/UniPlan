@@ -111,14 +111,18 @@
             
             <!-- View Mode -->
             <div id="modalViewMode" class="p-6 overflow-y-auto custom-scrollbar flex-1 text-gray-300 text-sm leading-relaxed">
-                <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
                     <div class="bg-dark-card p-3 rounded-lg border border-gray-700/50">
                         <div class="text-xs text-gray-500 mb-1">ECTS</div>
                         <div class="font-medium text-white text-lg" id="modalEcts"></div>
                     </div>
                     <div class="bg-dark-card p-3 rounded-lg border border-gray-700/50">
-                        <div class="text-xs text-gray-500 mb-1">Exam Date</div>
+                        <div class="text-xs text-gray-500 mb-1">Confirmed Date</div>
                         <div class="font-medium text-white text-lg" id="modalDate"></div>
+                    </div>
+                    <div class="bg-dark-card p-3 rounded-lg border border-gray-700/50">
+                        <div class="text-xs text-brand-500 mb-1">Expected Date</div>
+                        <div class="font-medium text-white text-lg" id="modalExpectedDate"></div>
                     </div>
                     <div class="bg-dark-card p-3 rounded-lg border border-gray-700/50">
                         <div class="text-xs text-gray-500 mb-1">Professor</div>
@@ -149,8 +153,12 @@
                         <input type="number" id="editEcts" step="0.5" class="w-full bg-dark-card border border-gray-600 rounded p-2 text-white focus:outline-none focus:ring-1 focus:ring-brand-500">
                     </div>
                     <div>
-                        <label class="block text-xs text-gray-500 mb-1">Exam Date (YYYY-MM-DD)</label>
+                        <label class="block text-xs text-gray-500 mb-1">Confirmed Date (YYYY-MM-DD)</label>
                         <input type="date" id="editDate" class="w-full bg-dark-card border border-gray-600 rounded p-2 text-white focus:outline-none focus:ring-1 focus:ring-brand-500" style="color-scheme: dark;">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">Expected Date (YYYY-MM-DD)</label>
+                        <input type="date" id="editExpectedDate" class="w-full bg-dark-card border border-gray-600 rounded p-2 text-white focus:outline-none focus:ring-1 focus:ring-brand-500" style="color-scheme: dark;">
                     </div>
                     <div>
                         <label class="block text-xs text-gray-500 mb-1">Professor</label>

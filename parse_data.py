@@ -96,6 +96,46 @@ def parse_exam_dates(file_path, modules):
                 }
     return modules
 
+def parse_expected_exam_dates(file_path, modules):
+    if not os.path.exists(file_path):
+        return modules
+        
+    with open(file_path, 'r', encoding='utf-8') as f:
+        lines = f.readlines()
+        
+    for line in lines:
+        # e.g. | 28.07.2025 | W 1 T 1 | 914513 | Jürgen Frickel | FPGA-Entwurf mit VHDL |
+        match = re.search(r'\|\s*(\d{2}\.\d{2}\.\d{4})\s*\|\s*(.*?)\s*\|\s*(\d+)\s*\|\s*(.*?)\s*\|\s*(.*?)\s*\|', line)
+        if match:
+            date_str = match.group(1)
+            # group(2) is rastertermin, ignore
+            mod_id = match.group(3)
+            prof = match.group(4).strip()
+            name = match.group(5).strip()
+            
+            d, m, y = date_str.split('.')
+            # Shift the year to 2026 for timeline plotting as requested by user
+            iso_date = f"2026-{m}-{d}"
+            
+            if mod_id in modules:
+                modules[mod_id]["expectedExamDate"] = iso_date
+                if prof and modules[mod_id]["professor"] == "N/A":
+                    modules[mod_id]["professor"] = prof
+            else:
+                modules[mod_id] = {
+                    "id": mod_id,
+                    "name": name,
+                    "ects": 5.0, # Defaulting to 5
+                    "professor": prof if prof else "N/A",
+                    "description": "",
+                    "hasLectures": True,
+                    "pillar": "General",
+                    "type": "Module",
+                    "expectedExamDate": iso_date,
+                    "defaultDifficulty": "Medium"
+                }
+    return modules
+
 def parse_toc_metadata(file_path, modules):
     current_pillar = "General"
     current_type = "Module"
@@ -144,16 +184,18 @@ def generate_courses_js(modules, output_path):
         f.write(js_content)
 
 if __name__ == "__main__":
-    if len(sys.argv) < 4:
-        print("Usage: python parse_data.py <module_md> <exam_md> <output_js>")
+    if len(sys.argv) < 5:
+        print("Usage: python parse_data.py <module_md> <exam_md> <old_exam_md> <output_js>")
         sys.exit(1)
     
     mod_path = sys.argv[1]
     exam_path = sys.argv[2]
-    out_path = sys.argv[3]
+    old_exam_path = sys.argv[3]
+    out_path = sys.argv[4]
     
     mods = parse_module_descriptions(mod_path)
     mods = parse_toc_metadata(mod_path, mods)
+    mods = parse_expected_exam_dates(old_exam_path, mods)
     mods = parse_exam_dates(exam_path, mods)
     generate_courses_js(mods, out_path)
     print(f"Successfully exported {len(mods)} modules to {out_path}")

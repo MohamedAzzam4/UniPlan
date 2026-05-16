@@ -235,8 +235,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const exams = [];
             ids.forEach(id => {
                 const c = getCourseData(id);
-                if (c && c.examDate) {
-                    exams.push({ id, date: new Date(c.examDate) });
+                if (c) {
+                    if (c.examDate) {
+                        exams.push({ id, date: new Date(c.examDate) });
+                    }
+                    if (c.expectedExamDate) {
+                        exams.push({ id, date: new Date(c.expectedExamDate) });
+                    }
                 }
             });
 
@@ -246,6 +251,8 @@ document.addEventListener('DOMContentLoaded', () => {
             for (let i = 0; i < exams.length - 1; i++) {
                 const d1 = exams[i].date;
                 const d2 = exams[i + 1].date;
+                if (exams[i].id === exams[i + 1].id) continue;
+                
                 const diffTime = Math.abs(d2 - d1);
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
@@ -322,6 +329,7 @@ document.addEventListener('DOMContentLoaded', () => {
         modalTitle.textContent = c.name;
         modalEcts.textContent = c.ects;
         modalDate.textContent = c.examDate || 'TBA';
+        document.getElementById('modalExpectedDate').textContent = c.expectedExamDate || 'None';
         modalProf.textContent = c.professor || 'N/A';
         modalPillar.textContent = `${c.pillar !== 'General' ? c.pillar : 'General Module'} • ${c.type || 'Core'}`;
         modalDesc.textContent = c.description || 'No description available.';
@@ -348,6 +356,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('editName').value = c.name || '';
             document.getElementById('editEcts').value = c.ects || 0;
             document.getElementById('editDate').value = c.examDate || '';
+            document.getElementById('editExpectedDate').value = c.expectedExamDate || '';
             document.getElementById('editProf').value = c.professor || '';
             document.getElementById('editPhase').value = c.examPhase || 'Phase 1';
             document.getElementById('editPillar').value = c.pillar || 'General';
@@ -374,6 +383,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('editName').value = '';
             document.getElementById('editEcts').value = 5;
             document.getElementById('editDate').value = '';
+            document.getElementById('editExpectedDate').value = '';
             document.getElementById('editProf').value = '';
             document.getElementById('editPhase').value = 'Phase 1';
             document.getElementById('editPillar').value = 'General';
@@ -413,6 +423,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 name: document.getElementById('editName').value.trim(),
                 ects: parseFloat(document.getElementById('editEcts').value) || 0,
                 examDate: document.getElementById('editDate').value,
+                expectedExamDate: document.getElementById('editExpectedDate').value,
                 professor: document.getElementById('editProf').value.trim(),
                 examPhase: document.getElementById('editPhase').value,
                 pillar: document.getElementById('editPillar').value,
@@ -729,12 +740,23 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let s = 1; s <= 4; s++) {
             boardState.semesters[s].forEach(id => {
                 const c = getCourseData(id);
-                if(c && c.examDate) {
-                    allExams.push({
-                        ...c,
-                        semester: s,
-                        dateObj: new Date(c.examDate)
-                    });
+                if (c) {
+                    if(c.examDate) {
+                        allExams.push({
+                            ...c,
+                            semester: s,
+                            dateObj: new Date(c.examDate),
+                            isExpected: false
+                        });
+                    }
+                    if(c.expectedExamDate) {
+                        allExams.push({
+                            ...c,
+                            semester: s,
+                            dateObj: new Date(c.expectedExamDate),
+                            isExpected: true
+                        });
+                    }
                 }
             });
         }
@@ -760,12 +782,12 @@ document.addEventListener('DOMContentLoaded', () => {
             
             let collision = false;
             // Check previous
-            if(i > 0) {
+            if(i > 0 && allExams[i-1].id !== ex.id) {
                 const diffDays = Math.ceil(Math.abs(ex.dateObj - allExams[i-1].dateObj) / (1000*60*60*24));
                 if(diffDays < 4) collision = true;
             }
             // Check next
-            if(i < allExams.length - 1) {
+            if(i < allExams.length - 1 && allExams[i+1].id !== ex.id) {
                 const diffDays = Math.ceil(Math.abs(ex.dateObj - allExams[i+1].dateObj) / (1000*60*60*24));
                 if(diffDays < 4) collision = true;
             }
@@ -775,16 +797,22 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // dot
             const dot = document.createElement('div');
-            dot.className = `w-4 h-4 rounded-full shrink-0 shadow-[0_0_10px_currentColor] ${collision ? 'bg-red-500 text-red-500' : 'bg-brand-500 text-brand-500'} ring-4 ring-dark-bg`;
+            if (ex.isExpected) {
+                dot.className = `w-4 h-4 rounded-full shrink-0 border-2 ${collision ? 'border-red-500 bg-red-500/20 shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'border-brand-500 bg-brand-500/20 shadow-[0_0_10px_currentColor] text-brand-500'} ring-4 ring-dark-bg`;
+            } else {
+                dot.className = `w-4 h-4 rounded-full shrink-0 shadow-[0_0_10px_currentColor] ${collision ? 'bg-red-500 text-red-500' : 'bg-brand-500 text-brand-500'} ring-4 ring-dark-bg`;
+            }
             
             // content
             const content = document.createElement('div');
             content.className = `flex-1 p-4 rounded-lg border bg-dark-card ${collision ? 'border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.15)]' : 'border-gray-700'}`;
             
+            const dateLabel = ex.isExpected ? `(Expected) ${ex.expectedExamDate}` : ex.examDate;
+            
             content.innerHTML = `
                 <div class="flex justify-between items-start">
                     <div>
-                        <div class="text-xs ${collision ? 'text-red-400 font-bold' : 'text-brand-400'} mb-1">${ex.examDate} ${collision ? '⚠️ Collision' : ''}</div>
+                        <div class="text-xs ${collision ? 'text-red-400 font-bold' : 'text-brand-400'} mb-1">${dateLabel} ${collision ? '⚠️ Collision' : ''}</div>
                         <div class="font-bold text-white">${ex.name}</div>
                         <div class="text-xs text-gray-400 mt-1">${ex.id} • ${ex.professor}</div>
                     </div>
