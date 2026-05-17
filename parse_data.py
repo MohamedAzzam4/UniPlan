@@ -102,13 +102,14 @@ def parse_expected_exam_dates(file_path, modules):
         
     with open(file_path, 'r', encoding='utf-8') as f:
         lines = f.readlines()
-        
+    
+    # Collect all exam entries from the old schedule
+    exam_entries = []
     for line in lines:
         # e.g. | 28.07.2025 | W 1 T 1 | 914513 | Jürgen Frickel | FPGA-Entwurf mit VHDL |
         match = re.search(r'\|\s*(\d{2}\.\d{2}\.\d{4})\s*\|\s*(.*?)\s*\|\s*(\d+)\s*\|\s*(.*?)\s*\|\s*(.*?)\s*\|', line)
         if match:
             date_str = match.group(1)
-            # group(2) is rastertermin, ignore
             mod_id = match.group(3)
             prof = match.group(4).strip()
             name = match.group(5).strip()
@@ -117,23 +118,51 @@ def parse_expected_exam_dates(file_path, modules):
             # Shift the year to 2026 for timeline plotting as requested by user
             iso_date = f"2026-{m}-{d}"
             
-            if mod_id in modules:
-                modules[mod_id]["expectedExamDate"] = iso_date
-                if prof and modules[mod_id]["professor"] == "N/A":
-                    modules[mod_id]["professor"] = prof
-            else:
-                modules[mod_id] = {
-                    "id": mod_id,
-                    "name": name,
-                    "ects": 5.0, # Defaulting to 5
-                    "professor": prof if prof else "N/A",
-                    "description": "",
-                    "hasLectures": True,
-                    "pillar": "General",
-                    "type": "Module",
-                    "expectedExamDate": iso_date,
-                    "defaultDifficulty": "Medium"
-                }
+            exam_entries.append({
+                'pnr': mod_id,
+                'name': name,
+                'prof': prof,
+                'iso_date': iso_date
+            })
+    
+    # Pass 1: Match by PNr (existing behavior)
+    for entry in exam_entries:
+        mod_id = entry['pnr']
+        if mod_id in modules:
+            modules[mod_id]["expectedExamDate"] = entry['iso_date']
+            if entry['prof'] and modules[mod_id]["professor"] == "N/A":
+                modules[mod_id]["professor"] = entry['prof']
+        else:
+            modules[mod_id] = {
+                "id": mod_id,
+                "name": entry['name'],
+                "ects": 5.0,
+                "professor": entry['prof'] if entry['prof'] else "N/A",
+                "description": "",
+                "hasLectures": True,
+                "pillar": "General",
+                "type": "Module",
+                "expectedExamDate": entry['iso_date'],
+                "defaultDifficulty": "Medium"
+            }
+    
+    # Pass 2: Name-based fallback for modules that still lack expectedExamDate
+    # This handles the ID mismatch where catalog IDs != exam PNr
+    name_index = {}
+    for entry in exam_entries:
+        key = entry['name'].strip().lower()
+        if key:
+            name_index[key] = entry
+    
+    for mod_id, mod in modules.items():
+        if 'expectedExamDate' not in mod or not mod.get('expectedExamDate'):
+            name_key = mod.get('name', '').strip().lower()
+            if name_key in name_index:
+                entry = name_index[name_key]
+                mod['expectedExamDate'] = entry['iso_date']
+                if entry['prof'] and mod.get('professor') == 'N/A':
+                    mod['professor'] = entry['prof']
+    
     return modules
 
 def parse_toc_metadata(file_path, modules):

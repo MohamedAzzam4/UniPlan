@@ -33,7 +33,8 @@ const COURSE_DATA = [
     "pillar": "Human-system Interfaces",
     "type": "Core",
     "examDate": "",
-    "defaultDifficulty": "Medium"
+    "defaultDifficulty": "Medium",
+    "expectedExamDate": "2026-08-01"
   },
   {
     "id": "92359",
@@ -45,7 +46,8 @@ const COURSE_DATA = [
     "pillar": "Human-system Interfaces",
     "type": "Core",
     "examDate": "",
-    "defaultDifficulty": "Medium"
+    "defaultDifficulty": "Medium",
+    "expectedExamDate": "2026-10-02"
   },
   {
     "id": "645618",
@@ -69,7 +71,8 @@ const COURSE_DATA = [
     "pillar": "Human-system Interfaces",
     "type": "Core",
     "examDate": "",
-    "defaultDifficulty": "Medium"
+    "defaultDifficulty": "Medium",
+    "expectedExamDate": "2026-07-28"
   },
   {
     "id": "96310",
@@ -81,7 +84,8 @@ const COURSE_DATA = [
     "pillar": "Sensing & Perception",
     "type": "Elective",
     "examDate": "",
-    "defaultDifficulty": "Medium"
+    "defaultDifficulty": "Medium",
+    "expectedExamDate": "2026-08-05"
   },
   {
     "id": "92343",
@@ -117,7 +121,8 @@ const COURSE_DATA = [
     "pillar": "Human-system Interfaces",
     "type": "Elective",
     "examDate": "",
-    "defaultDifficulty": "Medium"
+    "defaultDifficulty": "Medium",
+    "expectedExamDate": "2026-07-28"
   },
   {
     "id": "47617",
@@ -129,7 +134,8 @@ const COURSE_DATA = [
     "pillar": "Human-system Interfaces",
     "type": "Elective",
     "examDate": "",
-    "defaultDifficulty": "Medium"
+    "defaultDifficulty": "Medium",
+    "expectedExamDate": "2026-07-28"
   },
   {
     "id": "93101",
@@ -141,7 +147,8 @@ const COURSE_DATA = [
     "pillar": "Human-system Interfaces",
     "type": "Elective",
     "examDate": "",
-    "defaultDifficulty": "Medium"
+    "defaultDifficulty": "Medium",
+    "expectedExamDate": "2026-10-06"
   },
   {
     "id": "47708",
@@ -189,7 +196,8 @@ const COURSE_DATA = [
     "pillar": "Networking & Collaboration",
     "type": "Core",
     "examDate": "",
-    "defaultDifficulty": "Medium"
+    "defaultDifficulty": "Medium",
+    "expectedExamDate": "2026-08-07"
   },
   {
     "id": "48410",
@@ -213,7 +221,8 @@ const COURSE_DATA = [
     "pillar": "Networking & Collaboration",
     "type": "Core",
     "examDate": "",
-    "defaultDifficulty": "Medium"
+    "defaultDifficulty": "Medium",
+    "expectedExamDate": "2026-10-02"
   },
   {
     "id": "668129",
@@ -262,7 +271,8 @@ const COURSE_DATA = [
     "pillar": "Networking & Collaboration",
     "type": "Elective",
     "examDate": "",
-    "defaultDifficulty": "Medium"
+    "defaultDifficulty": "Medium",
+    "expectedExamDate": "2026-08-08"
   },
   {
     "id": "687141",
@@ -382,7 +392,8 @@ const COURSE_DATA = [
     "pillar": "Planning & Control",
     "type": "Core",
     "examDate": "",
-    "defaultDifficulty": "Medium"
+    "defaultDifficulty": "Medium",
+    "expectedExamDate": "2026-09-22"
   },
   {
     "id": "92528",
@@ -406,7 +417,8 @@ const COURSE_DATA = [
     "pillar": "Planning & Control",
     "type": "Core",
     "examDate": "",
-    "defaultDifficulty": "Medium"
+    "defaultDifficulty": "Medium",
+    "expectedExamDate": "2026-08-07"
   },
   {
     "id": "97060",
@@ -418,7 +430,8 @@ const COURSE_DATA = [
     "pillar": "Planning & Control",
     "type": "Elective",
     "examDate": "",
-    "defaultDifficulty": "Medium"
+    "defaultDifficulty": "Medium",
+    "expectedExamDate": "2026-10-10"
   },
   {
     "id": "92535",
@@ -442,7 +455,8 @@ const COURSE_DATA = [
     "pillar": "Planning & Control",
     "type": "Elective",
     "examDate": "",
-    "defaultDifficulty": "Medium"
+    "defaultDifficulty": "Medium",
+    "expectedExamDate": "2026-10-01"
   },
   {
     "id": "94961",
@@ -454,7 +468,8 @@ const COURSE_DATA = [
     "pillar": "Planning & Control",
     "type": "Elective",
     "examDate": "",
-    "defaultDifficulty": "Medium"
+    "defaultDifficulty": "Medium",
+    "expectedExamDate": "2026-07-31"
   },
   {
     "id": "92430",
@@ -466,7 +481,8 @@ const COURSE_DATA = [
     "pillar": "Planning & Control",
     "type": "Elective",
     "examDate": "",
-    "defaultDifficulty": "Medium"
+    "defaultDifficulty": "Medium",
+    "expectedExamDate": "2026-10-06"
   },
   {
     "id": "96430",
@@ -478,7 +494,8 @@ const COURSE_DATA = [
     "pillar": "Sensing & Perception",
     "type": "Core",
     "examDate": "",
-    "defaultDifficulty": "Medium"
+    "defaultDifficulty": "Medium",
+    "expectedExamDate": "2026-09-23"
   },
   {
     "id": "48440",
@@ -490,7 +507,8 @@ const COURSE_DATA = [
     "pillar": "Sensing & Perception",
     "type": "Core",
     "examDate": "",
-    "defaultDifficulty": "Medium"
+    "defaultDifficulty": "Medium",
+    "expectedExamDate": "2026-10-01"
   },
   {
     "id": "44120",
@@ -502,7 +520,8 @@ const COURSE_DATA = [
     "pillar": "Planning & Control",
     "type": "Elective",
     "examDate": "",
-    "defaultDifficulty": "Medium"
+    "defaultDifficulty": "Medium",
+    "expectedExamDate": "2026-07-31"
   },
   {
     "id": "44130",
@@ -514,19 +533,21 @@ const COURSE_DATA = [
     "pillar": "Planning & Control",
     "type": "Elective",
     "examDate": "",
-    "defaultDifficulty": "Medium"
+    "defaultDifficulty": "Medium",
+    "expectedExamDate": "2026-10-07"
   },
   {
     "id": "93185",
     "name": "Reinforcement Learning",
     "ects": 5.0,
-    "professor": "N/A",
+    "professor": "Christopher Mutschler",
     "description": "",
     "hasLectures": true,
     "pillar": "Planning & Control",
     "type": "Elective",
     "examDate": "",
-    "defaultDifficulty": "Medium"
+    "defaultDifficulty": "Medium",
+    "expectedExamDate": "2026-07-29"
   },
   {
     "id": "94951",
@@ -538,7 +559,8 @@ const COURSE_DATA = [
     "pillar": "Planning & Control",
     "type": "Elective",
     "examDate": "",
-    "defaultDifficulty": "Medium"
+    "defaultDifficulty": "Medium",
+    "expectedExamDate": "2026-10-02"
   },
   {
     "id": "92880",
@@ -550,7 +572,8 @@ const COURSE_DATA = [
     "pillar": "Planning & Control",
     "type": "Elective",
     "examDate": "",
-    "defaultDifficulty": "Medium"
+    "defaultDifficulty": "Medium",
+    "expectedExamDate": "2026-10-10"
   },
   {
     "id": "95280",
@@ -574,7 +597,8 @@ const COURSE_DATA = [
     "pillar": "Planning & Control",
     "type": "Elective",
     "examDate": "",
-    "defaultDifficulty": "Medium"
+    "defaultDifficulty": "Medium",
+    "expectedExamDate": "2026-09-29"
   },
   {
     "id": "96316",
@@ -586,7 +610,8 @@ const COURSE_DATA = [
     "pillar": "Sensing & Perception",
     "type": "Core",
     "examDate": "",
-    "defaultDifficulty": "Medium"
+    "defaultDifficulty": "Medium",
+    "expectedExamDate": "2026-08-05"
   },
   {
     "id": "93173",
@@ -646,7 +671,8 @@ const COURSE_DATA = [
     "pillar": "Sensing & Perception",
     "type": "Elective",
     "examDate": "",
-    "defaultDifficulty": "Medium"
+    "defaultDifficulty": "Medium",
+    "expectedExamDate": "2026-10-09"
   },
   {
     "id": "44455",
@@ -658,7 +684,8 @@ const COURSE_DATA = [
     "pillar": "Sensing & Perception",
     "type": "Elective",
     "examDate": "",
-    "defaultDifficulty": "Medium"
+    "defaultDifficulty": "Medium",
+    "expectedExamDate": "2026-10-02"
   },
   {
     "id": "498723",

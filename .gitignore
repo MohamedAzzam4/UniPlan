@@ -7,3 +7,5 @@ data_analysis.py
 .agent/
 generate_analytics.py
 analytics/
+generate_match_report.py
+module_match_report.md
